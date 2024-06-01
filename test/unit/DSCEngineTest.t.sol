@@ -183,4 +183,20 @@ contract DSCEngineTest is Test {
         dsce.burnDsc(0);
         vm.stopPrank();
     }
+
+    function testCantBurnMoreThanUserHas() public {
+        vm.prank(USER);
+        vm.expectRevert();
+        dsce.burnDsc(1);
+    }
+
+    function testCanBurnDsc() public depositedCollateralAndMintedDsc {
+        vm.startPrank(USER);
+        dsc.approve(address(dsce), AMOUNT_TO_MINT);
+        dsce.burnDsc(AMOUNT_TO_MINT);
+        vm.stopPrank();
+
+        uint256 userBalance = dsc.balanceOf(USER);
+        assertEq(userBalance, 0);
+    }
 }

@@ -252,4 +252,18 @@ contract DSCEngineTest is Test {
         uint256 userHealthFactor = dsce.getHealthFactor(USER);
         assert(userHealthFactor == 0.9 ether);
     }
+
+    //Liquidation test
+    function testCantLiquidateGoodHealthFactor() public depositedCollateralAndMintedDsc {
+        ERC20Mock(weth).mint(LIQUIDATOR, COLLATERAL_TO_COVER);
+
+        vm.startPrank(LIQUIDATOR);
+        ERC20Mock(weth).approve(address(dsce), COLLATERAL_TO_COVER);
+        dsce.depositCollateralAndMintDsc(weth, COLLATERAL_TO_COVER, AMOUNT_TO_MINT);
+        dsc.approve(address(dsce), AMOUNT_TO_MINT);
+
+        vm.expectRevert(DSCEngine.DSCEngine__HealthFactorOkay.selector);
+        dsce.liquidate(weth, USER, AMOUNT_TO_MINT);
+        vm.stopPrank();
+    }
 }

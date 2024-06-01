@@ -194,8 +194,10 @@ contract DSCEngine is ReentrancyGuard {
         }
         _revertIfHealthFactorIsBroken(msg.sender);
     }
-
+    ////////////////////////////////////////
     //Private and internal view function
+    ////////////////////////////////////////
+
     function _calculateHealthFactor(uint256 totalDscMinted, uint256 collateralValueInUsd)
         internal
         pure
@@ -227,6 +229,12 @@ contract DSCEngine is ReentrancyGuard {
         if (!success) {
             revert DSCEngine__TransferFailed();
         }
+    }
+
+    function _getUsdValue(address token, uint256 amount) private view returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
+        (, int256 price,,,) = priceFeed.latestRoundData();
+        return ((uint256(price) * ADDITIONAL_FEED_PRECISION) * amount) / PRECISION;
     }
 
     function _getAccountInformation(address user)

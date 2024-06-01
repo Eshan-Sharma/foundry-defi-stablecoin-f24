@@ -238,4 +238,18 @@ contract DSCEngineTest is Test {
         uint256 userBalance = dsc.balanceOf(USER);
         assertEq(userBalance, 0);
     }
+    // healthFactor Tests
+
+    function testProperlyReportsHealthFactor() public depositedCollateralAndMintedDsc {
+        uint256 expectedHealthFactor = 100 ether;
+        uint256 healthFactor = dsce.getHealthFactor(USER);
+        assertEq(healthFactor, expectedHealthFactor);
+    }
+
+    function testHealthFactorCanGoBelowOne() public depositedCollateralAndMintedDsc {
+        int256 ethUsdUpdatedPrice = 18e8;
+        MockV3Aggregator(ethUsdPriceFeed).updateAnswer(ethUsdUpdatedPrice);
+        uint256 userHealthFactor = dsce.getHealthFactor(USER);
+        assert(userHealthFactor == 0.9 ether);
+    }
 }

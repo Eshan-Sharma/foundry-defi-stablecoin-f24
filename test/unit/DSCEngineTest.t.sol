@@ -149,4 +149,12 @@ contract DSCEngineTest is Test {
         dsce.mintDsc(0);
         vm.stopPrank();
     }
+
+    function testCanMintDsc() public depositedCollateral {
+        vm.prank(USER);
+        dsce.mintDsc(AMOUNT_TO_MINT);
+
+        uint256 userBalance = dsc.balanceOf(USER);
+        assertEq(userBalance, AMOUNT_TO_MINT);
+    }
 }

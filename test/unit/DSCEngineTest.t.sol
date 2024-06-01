@@ -28,6 +28,8 @@ contract DSCEngineTest is Test {
     uint256 public constant STARTING_ERC20_BALANCE = 10 ether;
     uint256 public AMOUNT_TO_MINT = 100 ether;
     uint256 public constant STARTING_USER_BALANCE = 10 ether;
+    uint256 public constant MIN_HEALTH_FACTOR = 1e18;
+    uint256 public constant LIQUIDATION_THRESHOLD = 50;
 
     address public LIQUIDATOR = makeAddr("liquidator");
     uint256 public COLLATERAL_TO_COVER = 20 ether;
@@ -325,5 +327,56 @@ contract DSCEngineTest is Test {
     function testGetCollateralTokenPriceFeed() public view {
         address priceFeed = dsce.getCollateralTokenPriceFeed(weth);
         assertEq(priceFeed, ethUsdPriceFeed);
+    }
+
+    function testGetCollateralTokens() public view {
+        address[] memory collateralTokens = dsce.getCollateralTokens();
+        assertEq(collateralTokens[0], weth);
+    }
+
+    function testGetMinHealthFactor() public view {
+        uint256 minHealthFactor = dsce.getMinHealthFactor();
+        assertEq(minHealthFactor, MIN_HEALTH_FACTOR);
+    }
+
+    function testGetLiquidationThreshold() public view {
+        uint256 liquidationThreshold = dsce.getLiquidationThreshold();
+        assertEq(liquidationThreshold, LIQUIDATION_THRESHOLD);
+    }
+
+    function testGetAccountCollateralValueFromInformation() public depositedCollateral {
+        (, uint256 collateralValue) = dsce.getAccountInformation(USER);
+        uint256 expectedCollateralValue = dsce.getUsdValue(weth, AMOUNT_COLLATERAL);
+        assertEq(collateralValue, expectedCollateralValue);
+    }
+
+    function testGetCollateralBalanceOfUser() public {
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
+        dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
+        vm.stopPrank();
+        uint256 collateralBalance = dsce.getCollateralBalanceOfUser(USER, weth);
+        assertEq(collateralBalance, AMOUNT_COLLATERAL);
+    }
+
+    function testGetAccountCollateralValue() public {
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
+        dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
+        vm.stopPrank();
+        uint256 collateralValue = dsce.getAccountCollateralValue(USER);
+        uint256 expectedCollateralValue = dsce.getUsdValue(weth, AMOUNT_COLLATERAL);
+        assertEq(collateralValue, expectedCollateralValue);
+    }
+
+    function testGetDsc() public view {
+        address dscAddress = dsce.getDsc();
+        assertEq(dscAddress, address(dsc));
+    }
+
+    function testLiquidationPrecision() public view {
+        uint256 expectedLiquidationPrecision = 100;
+        uint256 actualLiquidationPrecision = dsce.getLiquidationPrecision();
+        assertEq(actualLiquidationPrecision, expectedLiquidationPrecision);
     }
 }
